@@ -1,138 +1,144 @@
+// 简答题
+// 1.描述引用计数的工作原理和优缺点
+/**
+ * 在内部维护了一个引用计数器，引用关系改变时修改引用数字，引用数字为0时立即回收
+   优点：在运行过程中发现垃圾时立即回收，减少程序卡顿时间
+   缺点：无法回收循环引用的对象； 资源消耗较大
+ */
 
-//  1. 请说出下列最终的执行结果，并解释为什么？
-    var a  = [];
 
-for (let i = 0; i < 10; i++ ){
-    console.log(i)
-    debugger
-    a[i] = function () {
-        console.log("===function====",i)
-    }
-}
-a[9]();
+// 2.描述标记整理算法的工作流程
+/**
+ * 标记整理分两个阶段进行，首先运行的时候标记在活动的对象，在运行结束之后内存空间进行整理，把没有标记的对象进行删除。
+ */
+
+// 3.描述v8中新生代存储区垃圾回收的流程
+/**
+ * V8内存一分为二，小空间用于存储新生代对象（32M|16M）用于回收存活时间比较短的对象；
+ * 回收过程采用复制算法+标记整理；新生代内存区分为二个等大小空间；使用空间为From，
+ * 空间时间为To;活动对象的存储于From空间；标记整理后将活动对象拷贝To;From与To交换空间完成释放
+ */
+
+// 4.描述增量标记算法在何时使用及工作原理
+/**
+ * 在V8清除老生代对象时为提高清除效率优化时使用；
+ * 清除时，程序执行然后遍历对象进行标记，之后交替执行程序和增量标操作，标记完成后，进行清除操作，完成垃圾回收；
+ */
+
+//代码题 1
+// 基于以下代码完成下面的四个练习
+const fp = require('lodash/fp');
+ //数据
+// horsepower 马力， dollar_value 价格，in_stock 库存
+const cars  = [
+    {name: "Ferrari FF",horsepower: 660 ,dollar_value: 700000, in_stock: true},
+    {name: "Audi R8",horsepower: 525 ,dollar_value: 114200, in_stock: false},
+    {name: "Aston Martin One-77",horsepower: 750 ,dollar_value: 1850000, in_stock: true},
+    {name: "Pagani Huayra",horsepower: 700 ,dollar_value: 1300000, in_stock: false}
+]
+
+//练习1
+// 使用函数组合fp.flowRight() 重新实现下面这个函数
+// let isLastInstock = function (cars) {
+//     // 获取最后一条数据
+//     let last_car = fp.last(cars);
+//     return fp.prop("in_stock", last_car)
+// }
 
 /**
- *  1.
- *  答案  10
- *  理由： 用了var定义了 var a = []  var i =0 两个全局作用域的变量，
- *         根据js由上往下 一次执行的顺序，当for循环执行10次之后，
- *         数组a中创建了下标为0-9  十个方法  每个方法中  都会输出i
- *         当我们调用数组中的a[6]();方法时
- *         这个时候console.log去获取变量 i 循环结束后全局变量 i = 10,
- *         所以输出i 的值是10， 实际上 调用数组中的任何一个方法 都是10
- *
+ * 练习1 答案
+ * let isLastInstock  = fp.flowRight(fp.prop("in_stock"), fp.last);
+   console.log(isLastInstock(cars))
  */
 
 
-// 2.请说出下列最终的执行结果，并解释为什么？
-//     var tmp = 123;
-//     if(true){
-//         console.log(tmp)
-//         let tmp ;
-//     }
+//练习2
+//使用fp.flowRight()  fp.prop() 和 fp.first()获取第一个car的name
+/**
+ * 练习2 答案
+ * let getFirstName =  fp.flowRight(fp.prop('name'), fp.first)
+   console.log(getFirstName(cars))
+ */
+
+// 练习3
+//使用帮助函数_average 重构averageDollarValue,使用函数组合的方式实现
+// let _average = function(xs) { return fp.reduce(fp.add, 0, xs) / xs.length } // <- 无须改动
+
+// let averageDollarValue = function (cars) {
+//     let dollar_values = fp.map(function (car) {
+//         return car.dollar_value
+//     }, cars)
+//     return _average(dollar_values)
+// }
 
 /**
- * 2.
- *  答案：error Cannot access 'tmp' before initialization
- *  tmp 应该在使用之前定义好变量
- *  在使用了变量之后才去定义变量会出现 TDZ(暂时性死区)
+ * 练习3 答案
+ * let _average = function(xs) { return fp.reduce(fp.add, 0, xs) / xs.length } // <- 无须改动
+ * let averageDollarValue  = fp.flowRight(_average, fp.map(car => car.dollar_value))
+   console.log(averageDollarValue(cars))
  */
 
-// 结合ES6新语法，用最简单的方式找出数组中的最小值？
-// var arr = [12,34,32,89,4];
+//练习4
+//使用folwRight写一个sanitizeNames()函数，返回一个下划线连接的小写字符串，把数组中的name转为这种形式：
+// 例如： sanitizeNames(["Hello World"]) => ["hello_world"]
+/**
+ * 练习4 答案
+ *  let _underscore = fp.replace(/\W+/g, '_') // <-- 无须改动，并在 sanitizeNames 中使用它
 
-/** 3. 答案
- * const minNumber = Math.min(...arr)
- console.log(minNumber);
+     let names = ["Hello World","aa AAA"]
+     let sanitizeNames = fp.flowRight(fp.map(name => fp.toLower(name)), fp.map(name => _underscore(name) ))
+     console.log(sanitizeNames(names))
  */
 
-// 4.请详细说明var let const 三种申明变量的方式之间的具体差别
+
+//support.js
+// 代码题2
+// 练习1
+//使用 fp.add(x, y) 和 fp.map(f, x) 创建一个能让 functor 里的值增加的函数 ex1
+const { Maybe, Container } = require('./support')
 
 /**
- * 4. 答案
- * var 作用域 整个页面使用 没有太严格的先后顺序
- let  作用域 块级作用域  有严格的先后顺序，先定义变量 后使用 ，否则会出现TDZ(暂时性死区)
- const 和let 一样 但不一样的是 const是只读的，变量不可修改
+ * 练习1 答案
+  let maybe = Maybe.of([5, 6, 1])
+  let ex1 = fp.map(number => fp.add(number,1) )
+  console.log(ex1(maybe.map() ._value))
  */
 
 
-//5. 请说出下列代码最终输出的结果，并解释为什么？
-//     var a= 10;
-//     var obj = {
-//         a: 20,
-//         fn(){
-//             setTimeout(() => {
-//                 console.log(this.a)
-//             })
-//         }
-//     }
-//
-//     obj.fn();
-
+//练习2
+// 实现一个函数 ex2，能够使用 fp.first 获取列表的第一个元素
 /**
- * 5.
- * 答案 20
- *  分析理由 调用obj.fn(); 此时上下文指的是当前的这个obj，
- *  那么当输出this.a时 obj中的a是20就输出20
- *
- */
+ * 练习2 答案
+    let xs = Container.of(['do', 'ray', 'me', 'fa', 'so', 'la', 'ti', 'do'])
+    let ex2 = xs.map(fp.first)._value
+    console.log(ex2)
+*/
 
-
-// 6. 简述Symbol 类型的用途？
+//练习3：实现一个函数 ex3，使用 safeProp 和 fp.first 找到 user 的名字的首字母
 /**
- * 6. 答案
- * 可以生成全局唯一的值，默认实现了iterator
- * 可以用来做值的比较
- * 可以在对象中实现Symbol的迭代器方法 这样对象可以使用for of 循环
+ * let safeProp = fp.curry(function (x, o) { return Maybe.of(o[x]) })
+ let user = { id: 2, name: "Albert" }
+ let ex3 = safeProp('name',user)._value.replace(/(.)(?=[^$])/g, "$1,").split(",")
+ console.log(fp.first(ex3) )
+
  */
 
-// 7. 说说什么是浅拷贝，什么是深拷贝
-/**
- * 浅拷贝 只会对基本类型的值进行复制
- * 深拷贝 会把基本类型的值和引用类型的值一起进行复制
- */
+// 练习4：使用 Maybe 重写 ex4，不要有 if 语句
+/*let ex4 = function (n) {
+    if (n) { return parseInt(n) }
+}*/
+/** 练习4答案
+let ex4 = n => Maybe.of(n)
+    .map(parseInt)
+    ._value
 
-// 8. 谈谈你是如何理解js异步编程 EventLoop是做什么的，什么是宏任务，什么是微任务？
-/**
- * EventLoop ：  只负责做一件事 就是监听消息队列和调用栈
- * macro-task(宏任务)：包括整体代码script，setTimeout，setInterval
-   micro-task(微任务)：Promise，process.nextTick
- *
- */
-
-// 9.将下面异步代码使用Promise改进？
-// setTimeout(function () {
-//     var a = "hello";
-//     setTimeout(function () {
-//         var b = "lagou";
-//         setTimeout(function () {
-//             var c = "I ❥ U"
-//             console.log(a + b + c)
-//         },10)
-//     },10)
-// },10)
-
-/**
- * 9. 答案
- *  Promise.resolve("hello").then(function (value) {
-        return value + "lagou"
-    }).then(function (value) {
-        console.log(value + "I ❥ U")
-    })
- */
+console.log(ex4(null))*/
 
 
 
 
-// 10.请简述javaScript 和TypeScript之间的关系？
-/** 10 答案
- *  TypeScript是在javaScript的基础上开发，而最终TypeScript会转成js的文件
- *  也就是说TypeScript起源于javaScript
- */
 
-// 11.请谈谈你所认为的TypeScript优缺点？
-/** 11 答案
- *  typeScript 目前没有普及，项目中使用的话 前期需要学习成本
- *             优点 可以对数据类型限制 在编译时就可以提示出来
- */
+
+
+
 
